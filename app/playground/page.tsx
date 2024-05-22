@@ -29,26 +29,26 @@ export default function PlaygroundPage() {
   const [selectedImage3, setSelectedImage3] = useState("");
   const messageStore = useMessageStore();
 
-  const handleImageChange1 = (e) => {
+  const handleImageChange1 = (e: any) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile1(e.target.files[0]);
       setSelectedImage1(URL.createObjectURL(e.target.files[0]));
     }
   };
-  const handleImageChange2 = (e) => {
+  const handleImageChange2 = (e: any) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile2(e.target.files[0]);
       setSelectedImage2(URL.createObjectURL(e.target.files[0]));
     }
   };
-  const handleImageChange3 = (e) => {
+  const handleImageChange3 = (e: any) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile3(e.target.files[0]);
       setSelectedImage3(URL.createObjectURL(e.target.files[0]));
     }
   };
 
-  const handleSubmit1 = (e) => {
+  const handleSubmit1 = (e: any) => {
     e.preventDefault();
     messageStore.addMessageTask1({
       sender: "user",
@@ -67,7 +67,7 @@ export default function PlaygroundPage() {
     });
   };
 
-  const handleSubmit2 = (e) => {
+  const handleSubmit2 = (e: any) => {
     e.preventDefault();
     messageStore.addMessageTask2({
       sender: "user",
@@ -87,7 +87,7 @@ export default function PlaygroundPage() {
     });
   };
 
-  const handleSubmit3 = (e) => {
+  const handleSubmit3 = (e: any) => {
     e.preventDefault();
     messageStore.addMessageTask3({
       sender: "user",
