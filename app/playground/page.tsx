@@ -1,321 +1,327 @@
-import { Metadata } from "next"
-import Image from "next/image"
-import { CounterClockwiseClockIcon } from "@radix-ui/react-icons"
-
-import { Button } from "@/registry/new-york/ui/button"
+"use client";
+import Image from "next/image";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Aperture, FileImage, Zap } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useState, useTransition } from "react";
+import { Button } from "@/components/ui/button";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/registry/new-york/ui/hover-card"
-import { Label } from "@/registry/new-york/ui/label"
-import { Separator } from "@/registry/new-york/ui/separator"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/registry/new-york/ui/tabs"
-import { Textarea } from "@/registry/new-york/ui/textarea"
-
-import { CodeViewer } from "./components/code-viewer"
-import { MaxLengthSelector } from "./components/maxlength-selector"
-import { ModelSelector } from "./components/model-selector"
-import { PresetActions } from "./components/preset-actions"
-import { PresetSave } from "./components/preset-save"
-import { PresetSelector } from "./components/preset-selector"
-import { PresetShare } from "./components/preset-share"
-import { TemperatureSelector } from "./components/temperature-selector"
-import { TopPSelector } from "./components/top-p-selector"
-import { models, types } from "./data/models"
-import { presets } from "./data/presets"
-
-export const metadata: Metadata = {
-  title: "Playground",
-  description: "The OpenAI Playground built using the components.",
-}
+  submitTask1,
+  submitTask2,
+  submitTask3,
+} from "@/actions/handle-image-upload";
+import { useMessageStore } from "@/store/message-store";
+import MessageItem from "@/app/playground/components/message-item";
 
 export default function PlaygroundPage() {
+  const [isPending, startTransition] = useTransition();
+  const [isPending2, startTransition2] = useTransition();
+  const [isPending3, startTransition3] = useTransition();
+  const [selectedImage1, setSelectedImage1] = useState("");
+  const [selectedFile1, setSelectedFile1] = useState<File | null>(null);
+  const [selectedFile2, setSelectedFile2] = useState<File | null>(null);
+  const [selectedFile3, setSelectedFile3] = useState<File | null>(null);
+
+  const [selectedImage2, setSelectedImage2] = useState("");
+  const [selectedImage3, setSelectedImage3] = useState("");
+  const messageStore = useMessageStore();
+
+  const handleImageChange1 = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile1(e.target.files[0]);
+      setSelectedImage1(URL.createObjectURL(e.target.files[0]));
+    }
+  };
+  const handleImageChange2 = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile2(e.target.files[0]);
+      setSelectedImage2(URL.createObjectURL(e.target.files[0]));
+    }
+  };
+  const handleImageChange3 = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile3(e.target.files[0]);
+      setSelectedImage3(URL.createObjectURL(e.target.files[0]));
+    }
+  };
+
+  const handleSubmit1 = (e) => {
+    e.preventDefault();
+    messageStore.addMessageTask1({
+      sender: "user",
+      content: [selectedImage1],
+    });
+    startTransition(async () => {
+      setSelectedImage1("");
+      setSelectedFile1(null);
+      const response = await submitTask1(
+        selectedFile1 ? selectedFile1 : new File([], "empty"),
+      );
+      messageStore.addMessageTask1({
+        sender: "model",
+        content: [response],
+      });
+    });
+  };
+
+  const handleSubmit2 = (e) => {
+    e.preventDefault();
+    messageStore.addMessageTask2({
+      sender: "user",
+      content: [selectedImage2],
+    });
+    startTransition2(async () => {
+      setSelectedImage2("");
+      setSelectedFile2(null);
+      const response = await submitTask2(
+        selectedFile2 ? selectedFile2 : new File([], "empty"),
+      );
+      console.log(response);
+      messageStore.addMessageTask2({
+        sender: "model",
+        content: response.recommendations,
+      });
+    });
+  };
+
+  const handleSubmit3 = (e) => {
+    e.preventDefault();
+    messageStore.addMessageTask3({
+      sender: "user",
+      content: [selectedImage3],
+    });
+    startTransition3(async () => {
+      setSelectedImage3("");
+      setSelectedFile3(null);
+      const response = await submitTask3(
+        selectedFile3 ? selectedFile3 : new File([], "empty"),
+      );
+      console.log(response);
+      messageStore.addMessageTask3({
+        sender: "model",
+        content: response.recommendations,
+      });
+    });
+  };
+
   return (
     <>
-      <div className="md:hidden">
-        <Image
-          src="/examples/playground-light.png"
-          width={1280}
-          height={916}
-          alt="Playground"
-          className="block dark:hidden"
-        />
-        <Image
-          src="/examples/playground-dark.png"
-          width={1280}
-          height={916}
-          alt="Playground"
-          className="hidden dark:block"
-        />
-      </div>
       <div className="hidden h-full flex-col md:flex">
-        <div className="container flex flex-col items-start justify-between space-y-2 py-4 sm:flex-row sm:items-center sm:space-y-0 md:h-16">
+        <div className=" container flex flex-col items-start justify-between space-y-2 py-4 sm:flex-row sm:items-center sm:space-y-0 md:h-16">
           <h2 className="text-lg font-semibold">Playground</h2>
-          <div className="ml-auto flex w-full space-x-2 sm:justify-end">
-            <PresetSelector presets={presets} />
-            <PresetSave />
-            <div className="hidden space-x-2 md:flex">
-              <CodeViewer />
-              <PresetShare />
-            </div>
-            <PresetActions />
-          </div>
         </div>
         <Separator />
-        <Tabs defaultValue="complete" className="flex-1">
+        <Tabs defaultValue="task1" className="flex-1">
           <div className="container h-full py-6">
-            <div className="grid h-full items-stretch gap-6 md:grid-cols-[1fr_200px]">
+            <div className="flex gap-x-6">
               <div className="hidden flex-col space-y-4 sm:flex md:order-2">
-                <div className="grid gap-2">
-                  <HoverCard openDelay={200}>
-                    <HoverCardTrigger asChild>
-                      <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        Mode
-                      </span>
-                    </HoverCardTrigger>
-                    <HoverCardContent className="w-[320px] text-sm" side="left">
-                      Choose the interface that best suits your task. You can
-                      provide: a simple prompt to complete, starting and ending
-                      text to insert a completion within, or some text with
-                      instructions to edit it.
-                    </HoverCardContent>
-                  </HoverCard>
-                  <TabsList className="grid grid-cols-3">
-                    <TabsTrigger value="complete">
-                      <span className="sr-only">Complete</span>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="none"
-                        className="h-5 w-5"
-                      >
-                        <rect
-                          x="4"
-                          y="3"
-                          width="12"
-                          height="2"
-                          rx="1"
-                          fill="currentColor"
-                        ></rect>
-                        <rect
-                          x="4"
-                          y="7"
-                          width="12"
-                          height="2"
-                          rx="1"
-                          fill="currentColor"
-                        ></rect>
-                        <rect
-                          x="4"
-                          y="11"
-                          width="3"
-                          height="2"
-                          rx="1"
-                          fill="currentColor"
-                        ></rect>
-                        <rect
-                          x="4"
-                          y="15"
-                          width="3"
-                          height="2"
-                          rx="1"
-                          fill="currentColor"
-                        ></rect>
-                        <rect
-                          x="8.5"
-                          y="11"
-                          width="3"
-                          height="2"
-                          rx="1"
-                          fill="currentColor"
-                        ></rect>
-                        <rect
-                          x="8.5"
-                          y="15"
-                          width="3"
-                          height="2"
-                          rx="1"
-                          fill="currentColor"
-                        ></rect>
-                        <rect
-                          x="13"
-                          y="11"
-                          width="3"
-                          height="2"
-                          rx="1"
-                          fill="currentColor"
-                        ></rect>
-                      </svg>
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Task
+                  </span>
+                  <TabsList className="flex items-center">
+                    <TabsTrigger value="task1">
+                      <span className="">Task 1</span>
                     </TabsTrigger>
-                    <TabsTrigger value="insert">
-                      <span className="sr-only">Insert</span>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="none"
-                        className="h-5 w-5"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M14.491 7.769a.888.888 0 0 1 .287.648.888.888 0 0 1-.287.648l-3.916 3.667a1.013 1.013 0 0 1-.692.268c-.26 0-.509-.097-.692-.268L5.275 9.065A.886.886 0 0 1 5 8.42a.889.889 0 0 1 .287-.64c.181-.17.427-.267.683-.269.257-.002.504.09.69.258L8.903 9.87V3.917c0-.243.103-.477.287-.649.183-.171.432-.268.692-.268.26 0 .509.097.692.268a.888.888 0 0 1 .287.649V9.87l2.245-2.102c.183-.172.432-.269.692-.269.26 0 .508.097.692.269Z"
-                          fill="currentColor"
-                        ></path>
-                        <rect
-                          x="4"
-                          y="15"
-                          width="3"
-                          height="2"
-                          rx="1"
-                          fill="currentColor"
-                        ></rect>
-                        <rect
-                          x="8.5"
-                          y="15"
-                          width="3"
-                          height="2"
-                          rx="1"
-                          fill="currentColor"
-                        ></rect>
-                        <rect
-                          x="13"
-                          y="15"
-                          width="3"
-                          height="2"
-                          rx="1"
-                          fill="currentColor"
-                        ></rect>
-                      </svg>
+                    <TabsTrigger value="task2">
+                      <span className="">Task 2</span>
                     </TabsTrigger>
-                    <TabsTrigger value="edit">
-                      <span className="sr-only">Edit</span>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="none"
-                        className="h-5 w-5"
-                      >
-                        <rect
-                          x="4"
-                          y="3"
-                          width="12"
-                          height="2"
-                          rx="1"
-                          fill="currentColor"
-                        ></rect>
-                        <rect
-                          x="4"
-                          y="7"
-                          width="12"
-                          height="2"
-                          rx="1"
-                          fill="currentColor"
-                        ></rect>
-                        <rect
-                          x="4"
-                          y="11"
-                          width="3"
-                          height="2"
-                          rx="1"
-                          fill="currentColor"
-                        ></rect>
-                        <rect
-                          x="4"
-                          y="15"
-                          width="4"
-                          height="2"
-                          rx="1"
-                          fill="currentColor"
-                        ></rect>
-                        <rect
-                          x="8.5"
-                          y="11"
-                          width="3"
-                          height="2"
-                          rx="1"
-                          fill="currentColor"
-                        ></rect>
-                        <path
-                          d="M17.154 11.346a1.182 1.182 0 0 0-1.671 0L11 15.829V17.5h1.671l4.483-4.483a1.182 1.182 0 0 0 0-1.671Z"
-                          fill="currentColor"
-                        ></path>
-                      </svg>
+                    <TabsTrigger value="task3">
+                      <span className="">Task 3</span>
                     </TabsTrigger>
                   </TabsList>
                 </div>
-                <ModelSelector types={types} models={models} />
-                <TemperatureSelector defaultValue={[0.56]} />
-                <MaxLengthSelector defaultValue={[256]} />
-                <TopPSelector defaultValue={[0.9]} />
               </div>
-              <div className="md:order-1">
-                <TabsContent value="complete" className="mt-0 border-0 p-0">
-                  <div className="flex h-full flex-col space-y-4">
-                    <Textarea
-                      placeholder="Write a tagline for an ice cream shop"
-                      className="min-h-[400px] flex-1 p-4 md:min-h-[700px] lg:min-h-[700px]"
-                    />
-                    <div className="flex items-center space-x-2">
-                      <Button>Submit</Button>
-                      <Button variant="secondary">
-                        <span className="sr-only">Show history</span>
-                        <CounterClockwiseClockIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
-                <TabsContent value="insert" className="mt-0 border-0 p-0">
+              <div className="md:order-1 flex-1">
+                <TabsContent value="task1" className="mt-0 border-0 p-0">
                   <div className="flex flex-col space-y-4">
-                    <div className="grid h-full grid-rows-2 gap-6 lg:grid-cols-2 lg:grid-rows-1">
-                      <Textarea
-                        placeholder="We're writing to [inset]. Congrats from OpenAI!"
-                        className="h-full min-h-[300px] lg:min-h-[700px] xl:min-h-[700px]"
-                      />
-                      <div className="rounded-md border bg-muted"></div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button>Submit</Button>
-                      <Button variant="secondary">
-                        <span className="sr-only">Show history</span>
-                        <CounterClockwiseClockIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
-                <TabsContent value="edit" className="mt-0 border-0 p-0">
-                  <div className="flex flex-col space-y-4">
-                    <div className="grid h-full gap-6 lg:grid-cols-2">
-                      <div className="flex flex-col space-y-4">
-                        <div className="flex flex-1 flex-col space-y-2">
-                          <Label htmlFor="input">Input</Label>
-                          <Textarea
-                            id="input"
-                            placeholder="We is going to the market."
-                            className="flex-1 lg:min-h-[580px]"
-                          />
-                        </div>
-                        <div className="flex flex-col space-y-2">
-                          <Label htmlFor="instructions">Instructions</Label>
-                          <Textarea
-                            id="instructions"
-                            placeholder="Fix the grammar."
-                          />
-                        </div>
+                    <ScrollArea className="gap-y-4 rounded p-2 ring ring-accent h-full min-h-[300px] lg:min-h-[700px] xl:min-h-[700px] flex flex-col items-center">
+                      <div className="flex px-3 py-2 rounded-full place-items-center gap-2 bg-muted mb-2">
+                        <Aperture />
+                        Predict your furniture image with out model
                       </div>
-                      <div className="mt-[21px] min-h-[400px] rounded-md border bg-muted lg:min-h-[700px]" />
+                      <div>
+                        {messageStore.messagesTask1.map((message) => (
+                          <MessageItem
+                            sender={message.sender}
+                            message={message.content}
+                            key={message.content[0]}
+                          />
+                        ))}
+                      </div>
+                    </ScrollArea>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-x-2">
+                        <Label
+                          className="gap-x-2 px-2 py-2 cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90"
+                          htmlFor="upload-img"
+                        >
+                          <FileImage />
+                          Upload image
+                        </Label>
+                        <Input
+                          id="upload-img"
+                          type="file"
+                          className="hidden"
+                          disabled={isPending}
+                          onChange={handleImageChange1}
+                        />
+                        {selectedImage1 && (
+                          <div
+                            style={{
+                              marginTop: "10px",
+                              position: "relative",
+                              width: "200px",
+                              height: "200px",
+                            }}
+                          >
+                            <Image
+                              src={selectedImage1}
+                              alt="Selected"
+                              layout="fill"
+                              objectFit="contain"
+                            />
+                          </div>
+                        )}{" "}
+                      </div>
+                      <form onSubmit={handleSubmit1}>
+                        <Button
+                          type="submit"
+                          className="flex items-center gap-x-2"
+                          disabled={isPending || !selectedFile1}
+                        >
+                          <Zap /> Submit Image
+                        </Button>
+                      </form>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Button>Submit</Button>
-                      <Button variant="secondary">
-                        <span className="sr-only">Show history</span>
-                        <CounterClockwiseClockIcon className="h-4 w-4" />
-                      </Button>
+                  </div>
+                </TabsContent>
+                <TabsContent value="task2" className="mt-0 border-0 p-0">
+                  <div className="flex flex-col space-y-4">
+                    <ScrollArea className="gap-y-4 rounded p-2 ring ring-accent h-full min-h-[300px] lg:min-h-[700px] xl:min-h-[700px] flex flex-col items-center">
+                      <div className="flex px-3 py-2 rounded-full place-items-center gap-2 bg-muted mb-2">
+                        <Aperture />
+                        Recommendation 10 similar images for you image
+                      </div>
+                      <div>
+                        {messageStore.messagesTask2.map((message) => (
+                          <MessageItem
+                            message={message.content}
+                            sender={message.sender}
+                            key={message.content[0]}
+                          />
+                        ))}
+                      </div>
+                    </ScrollArea>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-x-2">
+                        <Label
+                          className="gap-x-2 px-2 py-2 cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90"
+                          htmlFor="upload-img"
+                        >
+                          <FileImage />
+                          Upload image
+                        </Label>
+                        <Input
+                          id="upload-img"
+                          type="file"
+                          className="hidden"
+                          disabled={isPending2}
+                          onChange={handleImageChange2}
+                        />
+                        {selectedImage2 && (
+                          <div
+                            style={{
+                              marginTop: "10px",
+                              position: "relative",
+                              width: "200px",
+                              height: "200px",
+                            }}
+                          >
+                            <Image
+                              src={selectedImage2}
+                              alt="Selected"
+                              layout="fill"
+                              objectFit="contain"
+                            />
+                          </div>
+                        )}{" "}
+                      </div>
+                      <form onSubmit={handleSubmit2}>
+                        <Button
+                          type="submit"
+                          className="flex items-center gap-x-2"
+                          disabled={isPending2 || !selectedFile2}
+                        >
+                          <Zap /> Submit Image
+                        </Button>
+                      </form>
+                    </div>
+                  </div>
+                </TabsContent>
+                <TabsContent value="task3" className="mt-0 border-0 p-0">
+                  <div className="flex flex-col space-y-4">
+                    <ScrollArea className="gap-y-4 rounded p-2 ring ring-accent h-full min-h-[300px] lg:min-h-[700px] xl:min-h-[700px] flex flex-col items-center">
+                      <div className="flex px-3 py-2 rounded-full place-items-center gap-2 bg-muted mb-2">
+                        <Aperture />
+                        Recommendation 10 similar images for you image style
+                      </div>
+                      <div>
+                        {messageStore.messagesTask3.map((message) => (
+                          <MessageItem
+                            message={message.content}
+                            sender={message.sender}
+                            key={message.content[0]}
+                          />
+                        ))}
+                      </div>
+                    </ScrollArea>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-x-2">
+                        <Label
+                          className="gap-x-2 px-2 py-2 cursor-pointer inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90"
+                          htmlFor="upload-img"
+                        >
+                          <FileImage />
+                          Upload image
+                        </Label>
+                        <Input
+                          id="upload-img"
+                          type="file"
+                          className="hidden"
+                          disabled={isPending3}
+                          onChange={handleImageChange3}
+                        />
+                        {selectedImage3 && (
+                          <div
+                            style={{
+                              marginTop: "10px",
+                              position: "relative",
+                              width: "200px",
+                              height: "200px",
+                            }}
+                          >
+                            <Image
+                              src={selectedImage3}
+                              alt="Selected"
+                              layout="fill"
+                              objectFit="contain"
+                            />
+                          </div>
+                        )}{" "}
+                      </div>
+                      <form onSubmit={handleSubmit3}>
+                        <Button
+                          type="submit"
+                          className="flex items-center gap-x-2"
+                          disabled={isPending3 || !selectedFile3}
+                        >
+                          <Zap /> Submit Image
+                        </Button>
+                      </form>
                     </div>
                   </div>
                 </TabsContent>
@@ -325,5 +331,5 @@ export default function PlaygroundPage() {
         </Tabs>
       </div>
     </>
-  )
+  );
 }
